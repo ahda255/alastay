@@ -7,9 +7,13 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit", 
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",     
+    "db:push": "prisma db push",  
+    "check:env": "node ./scripts/check-env.mjs",
     "seed": "prisma db seed"
   },
   "prisma": {
