@@ -1,0 +1,39 @@
+# Normalize text files in repo; Git will convert to CRLF on checkout on Windows when needed
+*               text=auto
+
+# Force LF for source/text files (good for Node/Next/Prisma projects)
+*.js            text eol=lf
+*.jsx           text eol=lf
+*.ts            text eol=lf
+*.tsx           text eol=lf
+*.mjs           text eol=lf
+*.cjs           text eol=lf
+*.json          text eol=lf
+*.prisma        text eol=lf
+*.md            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.css           text eol=lf
+*.scss          text eol=lf
+*.html          text eol=lf
+*.svg           text eol=lf
+Dockerfile      text eol=lf
+
+# Windows scripts keep CRLF (so they run in cmd.exe/PowerShell)
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# Treat env files as binary to keep them exactly as-is (no eol conversion)
+.env            -text
+*.env           -text
+.env.*          -text
+
+# Binary files (no diff/eol changes)
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.webp          binary
+*.ico           binary
+*.pdf           binary
+*.zip           binary
