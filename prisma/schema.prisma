@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Property {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String?
+  images        String[]
+  pricePerNight Int
+  locationText  String
+  facilities    String[]
+  status        Status   @default(DRAFT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  leads         Lead[]
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  propertyId String
+  source     LeadSource
+  name       String?
+  phone      String?
+  checkin    DateTime?
+  checkout   DateTime?
+  guests     Int?
+  status     LeadStatus @default(PENDING)
+  amount     Int?
+  createdAt  DateTime   @default(now())
+  property   Property   @relation(fields: [propertyId], references: [id])
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+}
+
+enum LeadSource {
+  wa
+  web
+}
+
+enum LeadStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}

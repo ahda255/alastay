@@ -16,13 +16,20 @@
 # next.js
 /.next/
 /out/
+dist/
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+*.log
 
 # production
 /build
 
 # misc
 .DS_Store
-*.pem
+coverage/
 
 # debug
 npm-debug.log*
