@@ -37,6 +37,15 @@ model Lead {
   createdAt  DateTime   @default(now())
   property   Property   @relation(fields: [propertyId], references: [id])
 }
+model Accommodation {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  price     Int      // simpan rupiah (contoh: 200000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 
 enum Status {
   DRAFT

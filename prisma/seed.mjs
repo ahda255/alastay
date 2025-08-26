@@ -1,19 +1,34 @@
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
-const toSlug = s => s.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')
+// prisma/seed.mjs
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-const samples = [
-  { title: 'Homestay Danau Kembar', pricePerNight: 180000, locationText: 'Alahan Panjang', facilities: ['Parkir','Air Panas','Sarapan'], images: ['/img/1.jpg'], description: 'Dekat Danau Kembar.' },
-  { title: 'Villa Kayu Bukit',     pricePerNight: 350000, locationText: 'Alahan Panjang', facilities: ['Dapur','WiFi','Pemandangan'], images: ['/img/2.jpg'], description: 'Villa kayu dengan view bukit.' },
-  { title: 'Guesthouse Sawah',     pricePerNight: 220000, locationText: 'Alahan Panjang', facilities: ['WiFi','Parkir'], images: ['/img/3.jpg'], description: 'Dekat persawahan.' },
-]
+async function main() {
+  // Gunakan ID deterministik supaya upsert idempotent
+  const items = [
+    { id: "seed-1", name: "Homestay AlaStay Padang", address: "Padang, Sumbar",     price: 250000 },
+    { id: "seed-2", name: "Guesthouse Minang",       address: "Bukittinggi, Sumbar", price: 300000 },
+    { id: "seed-3", name: "Vila Danau Maninjau",     address: "Agam, Sumbar",        price: 450000 },
+  ];
 
-async function main(){
-  await prisma.lead.deleteMany()
-  await prisma.property.deleteMany()
-  for (const p of samples) {
-    await prisma.property.create({ data: { ...p, slug: toSlug(p.title), status: 'PUBLISHED' } })
+  for (const it of items) {
+    await prisma.accommodation.upsert({
+      where: { id: it.id },       // ✅ pakai field unik
+      create: it,                 // buat jika belum ada
+      update: {                   // update jika sudah ada
+        name: it.name,
+        address: it.address,
+        price: it.price,
+      },
+    });
   }
-  console.log('Seed done')
+
+  console.log("✅ Seed OK");
 }
-main().finally(()=>prisma.$disconnect())
+
+main()
+  .then(async () => { await prisma.$disconnect(); })
+  .catch(async (e) => {
+    console.error("❌ Seed error:", e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

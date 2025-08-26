@@ -1,58 +1,57 @@
-// src/app/page.tsx
-import Link from 'next/link'
-import Script from 'next/script'
-import { prisma } from '../lib/db' // sesuaikan path jika beda
+import Script from "next/script";
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { Card, CardBody } from "@/components/ui/card";
+import Button from "@/components/ui/button";
 
 // (opsional) karena ada akses DB, pastikan tidak ke-cache
-export const revalidate = 0
-// atau bisa juga: export const dynamic = 'force-dynamic'
+export const revalidate = 0;
 
 // Tipe data kartu yang dipakai UI
 type PropertyCard = {
-  id: string
-  slug: string
-  title: string
-  locationText: string
-  pricePerNight: number
-  images: string[] | null
-}
+  id: string;
+  slug: string;
+  title: string;
+  locationText: string;
+  pricePerNight: number;
+  images: string[] | null;
+};
 
 // helper number dari query
 function toNumber(v: unknown): number | undefined {
-  const s = Array.isArray(v) ? v[0] : (v as string | undefined)
-  if (!s) return undefined
-  const n = Number(s)
-  return Number.isFinite(n) ? n : undefined
+  const s = Array.isArray(v) ? v[0] : (v as string | undefined);
+  if (!s) return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 // formatter ribuan
-const fmt = (n: number) => new Intl.NumberFormat('id-ID').format(n)
+const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
 export default async function Home({
-  // Next.js 15: searchParams adalah Promise -> harus di-await
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const sp = await searchParams
+  const sp = await searchParams;
 
   const location =
-    typeof sp.location === 'string'
+    typeof sp.location === "string"
       ? sp.location
       : Array.isArray(sp.location)
-      ? sp.location[0] ?? ''
-      : ''
+      ? sp.location[0] ?? ""
+      : "";
 
-  const min = toNumber(sp.min)
-  const max = toNumber(sp.max)
+  const min = toNumber(sp.min);
+  const max = toNumber(sp.max);
 
   // where Prisma
-  const where: Record<string, any> = {}
-  if (location) where.locationText = { contains: location, mode: 'insensitive' }
+  const where: Record<string, any> = {};
+  if (location) where.locationText = { contains: location, mode: "insensitive" };
   if (min != null || max != null) {
-    where.pricePerNight = {}
-    if (min != null) where.pricePerNight.gte = min
-    if (max != null) where.pricePerNight.lte = max
+    where.pricePerNight = {};
+    if (min != null) where.pricePerNight.gte = min;
+    if (max != null) where.pricePerNight.lte = max;
   }
 
   // Query data
@@ -66,29 +65,29 @@ export default async function Home({
       pricePerNight: true,
       images: true,
     },
-    // Hapus baris ini kalau skema tidak punya createdAt
-    orderBy: { createdAt: 'desc' },
-  })
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
-    <main className="p-4 space-y-4">
-      {/* Script analytics: view_list + filter_applied + click_card */}
+    <main className="py-6 space-y-6">
+      {/* CTA ke daftar penginapan */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Jelajahi Penginapan</h1>
+        <Button href="/penginapan">Lihat Daftar</Button>
+      </div>
+
+      {/* Script analytics */}
       <Script id="alastay-list-events" strategy="afterInteractive">
         {`
           (function () {
-            // dispatch helper
             function send(name, props) {
               window.dispatchEvent(new CustomEvent('alastay:event', { detail: { name, props } }));
             }
-
-            // 1) View list saat halaman siap
             if (document.readyState === 'complete' || document.readyState === 'interactive') {
               send('view_list');
             } else {
               document.addEventListener('DOMContentLoaded', function(){ send('view_list'); });
             }
-
-            // 2) Filter applied saat submit form
             var form = document.getElementById('filter-form');
             if (form) {
               form.addEventListener('submit', function () {
@@ -101,11 +100,8 @@ export default async function Home({
                 send('filter_applied', data);
               });
             }
-
-            // 3) Click card: delegasi klik pada link yang punya data-prop-id
             document.addEventListener('click', function (e) {
               var el = e.target;
-              // cari anchor terdekat
               while (el && el !== document) {
                 if (el instanceof HTMLAnchorElement && el.dataset && el.dataset.propId) {
                   send('click_card', { propertyId: el.dataset.propId, slug: el.dataset.propSlug });
@@ -119,7 +115,12 @@ export default async function Home({
       </Script>
 
       {/* Form filter */}
-      <form id="filter-form" className="grid grid-cols-2 gap-2" role="search" aria-label="Filter penginapan">
+      <form
+        id="filter-form"
+        className="grid grid-cols-2 gap-2"
+        role="search"
+        aria-label="Filter penginapan"
+      >
         <input
           name="location"
           defaultValue={location}
@@ -130,7 +131,7 @@ export default async function Home({
         <input
           name="min"
           type="number"
-          defaultValue={min ?? ''}
+          defaultValue={min ?? ""}
           placeholder="Min Harga"
           className="border p-2 rounded"
           aria-label="Harga minimum"
@@ -138,7 +139,7 @@ export default async function Home({
         <input
           name="max"
           type="number"
-          defaultValue={max ?? ''}
+          defaultValue={max ?? ""}
           placeholder="Max Harga"
           className="border p-2 rounded"
           aria-label="Harga maksimum"
@@ -147,34 +148,46 @@ export default async function Home({
       </form>
 
       {/* List kartu */}
-      <section className="grid gap-3" aria-live="polite">
+      <section
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        aria-live="polite"
+      >
         {items.map((p) => (
           <Link
             key={p.id}
             href={`/property/${p.slug}`}
-            className="block border rounded p-3 focus:outline-none focus:ring-2"
+            className="block focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded-xl"
             data-prop-id={p.id}
             data-prop-slug={p.slug}
             aria-label={`Lihat detail ${p.title}`}
           >
-            <img
-              src={p.images?.[0] ?? '/placeholder.jpg'}
-              alt={`Foto ${p.title}`}
-              className="w-full h-40 object-cover rounded"
-            />
-            <div className="mt-2">
-              <h2 className="text-lg font-semibold">{p.title}</h2>
-              <p className="text-sm">{p.locationText}</p>
-              <p className="font-medium mt-1">Rp {fmt(p.pricePerNight)}/malam</p>
-            </div>
+            <Card>
+              <img
+                src={p.images?.[0] ?? "/placeholder.jpg"}
+                alt={`Foto ${p.title}`}
+                className="h-40 w-full rounded-t-xl object-cover"
+              />
+              <CardBody>
+                <h2 className="line-clamp-1 text-base font-semibold">
+                  {p.title}
+                </h2>
+                <p className="text-sm text-gray-600">{p.locationText}</p>
+                <p className="mt-1 font-medium">
+                  Rp {fmt(p.pricePerNight)}/malam
+                </p>
+              </CardBody>
+            </Card>
           </Link>
         ))}
 
         {items.length === 0 && (
-          <p className="text-sm text-gray-500">Tidak ada hasil sesuai filter</p>
+          <Card>
+            <CardBody className="text-sm text-gray-600">
+              Tidak ada hasil sesuai filter
+            </CardBody>
+          </Card>
         )}
       </section>
-      
     </main>
-  )
+  );
 }
